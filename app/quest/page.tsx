@@ -27,6 +27,9 @@ export default function QuestPage() {
   const [over21, setOver21] = useState(false);
   const [loading, setLoading] = useState(false);
   const [quest, setQuest] = useState<Quest | null>(null);
+  const [savingQuest, setSavingQuest] = useState(false);
+  const [savedQuestId, setSavedQuestId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState("");
   const [stamps, setStamps] = useState<Record<string, boolean>>({});
   const [badges, setBadges] = useState<string[]>([]);
 
@@ -59,6 +62,8 @@ export default function QuestPage() {
   async function go() {
     setLoading(true);
     setQuest(null);
+    setSavedQuestId(null);
+    setSaveError("");
     setStamps({});
     try {
       const res = await fetch("/api/quest", {
@@ -69,6 +74,26 @@ export default function QuestPage() {
       setQuest(await res.json());
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function saveQuest() {
+    if (!quest) return;
+    setSavingQuest(true);
+    setSaveError("");
+    try {
+      const res = await fetch("/api/saved-quests", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ quest }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || "Could not save this quest.");
+      setSavedQuestId(String(data.id));
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Could not save this quest.");
+    } finally {
+      setSavingQuest(false);
     }
   }
 
@@ -116,7 +141,10 @@ export default function QuestPage() {
           {badges.length > 0 && (
             <div className="badges">{badges.slice(-4).map((b) => <span key={b} className="badge">{b}</span>)}</div>
           )}
-          <button className="btn2" onClick={logout}>Log out</button>
+          <div className="row">
+            <button className="btn2" onClick={() => router.push("/saved-quests")}>Saved quests</button>
+            <button className="btn2" onClick={logout}>Log out</button>
+          </div>
         </header>
 
         <div className="grid">
@@ -236,7 +264,12 @@ export default function QuestPage() {
                 <div className="row">
                   <button className="btn2" onClick={go}>🎲 Reroll</button>
                   <button className="btn2" onClick={() => navigator.clipboard?.writeText(window.location.href)}>Share with the group chat</button>
+                  <button className="btn2" onClick={saveQuest} disabled={savingQuest || !!savedQuestId}>
+                    {savingQuest ? "Saving..." : savedQuestId ? "✓ Saved" : "♡ Save quest"}
+                  </button>
+                  {savedQuestId && <button className="btn2" onClick={() => router.push(`/saved-quests/${savedQuestId}`)}>View saved quest</button>}
                 </div>
+                {saveError && <p className="auth-error" role="alert">{saveError}</p>}
               </div>
             )}
           </section>

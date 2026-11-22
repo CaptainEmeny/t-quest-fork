@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { questAgent } from "@/mastra/agent";
-import { QuestInput, QuestPlan, buildQuest, fallbackPlan } from "@/lib/quest";
+import { generateGeminiQuestPlan } from "@/lib/gemini";
+import { QuestInput, buildQuest, fallbackPlan } from "@/lib/quest";
 import { stationById } from "@/lib/stations";
 import { verifyAuthToken } from "@/lib/auth";
 
@@ -21,45 +21,17 @@ export async function POST(req: NextRequest) {
 
   const hasKey = !!(process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY);
   if (hasKey) {
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), 45_000);
     try {
-      const now = new Date().toLocaleString("en-US", { timeZone: "America/New_York", weekday: "long", hour: "numeric", minute: "2-digit" });
-      const prompt = `Plan a quest.
-Now: ${now} (Boston)
-Starting station: ${stationById(input.startStation)?.name ?? input.startStation}
-Budget: $${input.budget} per person
-Group size: ${input.groupSize}
-Time available: ${input.hours} hours
-Vibe: ${input.vibe}
-Craving: ${input.craving || "none"}
-Whole group 21+: ${input.over21 ? "yes" : "no"}`;
-      const abort = new AbortController();
       console.info("Calling Gemini API for quest generation.");
-      const generate = questAgent.generate(prompt, {
-        structuredOutput: { schema: QuestPlan },
-        abortSignal: abort.signal,
-      });
-      // Whichever promise loses the race can still reject later.
-      generate.catch(() => {});
-      let timer: ReturnType<typeof setTimeout> | undefined;
-      const timeout = new Promise<never>((_, reject) => {
-        timer = setTimeout(() => {
-          abort.abort();
-          reject(new Error("Gemini timed out after 25s"));
-        }, 25_000);
-      });
-      timeout.catch(() => {});
-      let res: Awaited<typeof generate>;
-      try {
-        // If Gemini keeps retrying a slow or overloaded call, fall through to fallbackPlan.
-        res = await Promise.race([generate, timeout]);
-      } finally {
-        clearTimeout(timer);
-      }
-      const plan = QuestPlan.parse(res.object);
+      const plan = await generateGeminiQuestPlan(input, abort.signal);
       const quest = await buildQuest(input, plan, "gemini");
       if (quest.steps.some((s) => s.kind === "stop")) return NextResponse.json(quest);
     } catch (e) {
-      console.error("Agent failed, using fallback:", e);
+      console.error("Gemini failed, using fallback:", e);
+    } finally {
+      clearTimeout(timer);
     }
   } else {
     console.info("Skipping Gemini API call: no Google API key is configured.");

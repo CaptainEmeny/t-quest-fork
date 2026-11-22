@@ -53,6 +53,60 @@ export type Quest = {
   warnings: string[];
 };
 
+const SavedPlace = z.object({
+  id: z.string().min(1).max(100),
+  name: z.string().min(1).max(200),
+  category: z.enum(["food", "cafe", "activity", "nightlife"]),
+  tags: z.array(z.string().max(80)).max(30),
+  price: z.number().nonnegative(),
+  vibes: z.array(z.string().max(40)).max(20),
+  open: z.number(),
+  close: z.number(),
+  age21: z.boolean(),
+  groupMax: z.number().int().positive(),
+  station: z.string().max(100),
+  walk: z.number().int().nonnegative(),
+  trending: z.boolean(),
+  blurb: z.string().max(1000),
+});
+
+export const QuestSchema = z.object({
+  title: z.string().min(1).max(120),
+  tagline: z.string().max(500),
+  generatedBy: z.enum(["gemini", "fallback"]),
+  steps: z.array(
+    z.discriminatedUnion("kind", [
+      z.object({
+        kind: z.literal("ride"),
+        from: z.string().max(100),
+        to: z.string().max(100),
+        line: z.string().max(100),
+        color: z.string().max(40),
+        transferAt: z.string().max(100).optional(),
+        nextTrains: z.array(
+          z.object({
+            route: z.string().max(100),
+            minutes: z.number().nonnegative(),
+            headsign: z.string().max(200).optional(),
+          })
+        ).max(6),
+      }),
+      z.object({
+        kind: z.literal("stop"),
+        place: SavedPlace,
+        station: z.string().max(100),
+        why: z.string().max(500),
+        minutes: z.number().nonnegative(),
+      }),
+    ])
+  ).max(6),
+  perPerson: z.number().nonnegative(),
+  groupTotal: z.number().nonnegative(),
+  totalMinutes: z.number().nonnegative(),
+  lastTrain: z.object({ station: z.string().max(100), time: z.string().max(100) }).nullable(),
+  warnings: z.array(z.string().max(500)).max(10),
+});
+
 // --- routing between stations (simple, line-based) ---
 const lineOf = (l: string) => l.split(" ")[0]; // "Green B" -> "Green"
 const TRANSFERS: { id: string; lines: string[] }[] = [

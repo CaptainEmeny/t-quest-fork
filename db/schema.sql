@@ -9,6 +9,15 @@ CREATE TABLE IF NOT EXISTS users (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS saved_quests (
+  id         BIGSERIAL PRIMARY KEY,
+  user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title      TEXT NOT NULL,
+  quest      JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS saved_quests_user_created_idx ON saved_quests (user_id, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS places (
   id         TEXT PRIMARY KEY,
   name       TEXT NOT NULL,
