@@ -1,5 +1,7 @@
-import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
+import { verifyAuthToken } from "@/lib/auth";
+
+export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const token = req.cookies.get("tq-token")?.value;
@@ -8,10 +10,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Authentication service unavailable" }, { status: 500 });
   }
 
-  try {
-    const user = jwt.verify(token, process.env.JWT_SECRET) as { userId: number };
-    return NextResponse.json({ userId: user.userId });
-  } catch {
-    return NextResponse.json({ error: "Invalid token" }, { status: 403 });
-  }
+  const user = verifyAuthToken(token);
+  if (!user) return NextResponse.json({ error: "Invalid token" }, { status: 403 });
+  return NextResponse.json(user);
 }

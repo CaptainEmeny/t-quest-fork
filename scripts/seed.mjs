@@ -1,6 +1,9 @@
 // Usage: DATABASE_URL=... npm run seed
 import fs from "node:fs";
 import pg from "pg";
+import nextEnv from "@next/env";
+
+nextEnv.loadEnvConfig(process.cwd());
 
 const url = process.env.DATABASE_URL;
 if (!url) { console.error("Set DATABASE_URL (your Tiger Data connection string)"); process.exit(1); }

@@ -35,7 +35,12 @@ The login and signup pages use the integrated Next.js auth routes:
 2. `npm run seed` creates the `places` table and loads `data/places.json`
 
 ## Deploy
-Push to GitHub, import into Vercel, add the env vars, then point your GoDaddy Registry domain at it.
+1. Import the repository into Vercel and keep the Next.js framework preset so API routes run as serverless functions.
+2. Add `DATABASE_URL`, `JWT_SECRET`, and `GOOGLE_GENERATIVE_AI_API_KEY` in **Project Settings → Environment Variables**. Use the production Postgres connection string and a long, random JWT secret; do not use `NEXT_PUBLIC_` for secrets.
+3. Before using signup, run `npm run seed` once with `DATABASE_URL` set to the same production database. This creates the `users` and `places` tables and loads the starter places. The seed script reads `.env.local` when run locally.
+4. Deploy the project, then point your GoDaddy Registry domain at the Vercel project.
+
+The auth and quest API routes verify the session cookie on the server. Authentication requires `JWT_SECRET` and `DATABASE_URL`; quest place lookups use `DATABASE_URL` when configured and otherwise fall back to the bundled JSON data.
 
 ## Stack
 Next.js 15 · Mastra · Gemini API · Tiger Data (Postgres) · MBTA v3 API

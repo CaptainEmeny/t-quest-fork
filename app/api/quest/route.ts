@@ -1,12 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { questAgent } from "@/mastra/agent";
 import { QuestInput, QuestPlan, buildQuest, fallbackPlan } from "@/lib/quest";
 import { stationById } from "@/lib/stations";
+import { verifyAuthToken } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  if (!process.env.JWT_SECRET) {
+    return NextResponse.json({ error: "Authentication service unavailable" }, { status: 500 });
+  }
+  if (!verifyAuthToken(req.cookies.get("tq-token")?.value)) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
   const parsed = QuestInput.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   const input = parsed.data;
