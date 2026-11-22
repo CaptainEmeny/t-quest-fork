@@ -25,6 +25,7 @@ Vibe: ${input.vibe}
 Craving: ${input.craving || "none"}
 Whole group 21+: ${input.over21 ? "yes" : "no"}`;
       const abort = new AbortController();
+      console.info("Calling Gemini API for quest generation.");
       const generate = questAgent.generate(prompt, {
         structuredOutput: { schema: QuestPlan },
         abortSignal: abort.signal,
@@ -52,6 +53,8 @@ Whole group 21+: ${input.over21 ? "yes" : "no"}`;
     } catch (e) {
       console.error("Agent failed, using fallback:", e);
     }
+  } else {
+    console.info("Skipping Gemini API call: no Google API key is configured.");
   }
   const quest = await buildQuest(input, await fallbackPlan(input), "fallback");
   return NextResponse.json(quest);

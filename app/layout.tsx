@@ -2,8 +2,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "T-Quest: your night out, routed by the T",
-  description: "Tell us your budget, crew, and vibe. We build the quest. You ride the T.",
+  title: "T-Quest | Boston nights, better planned",
+  description: "Pick your vibe, set your budget, and get a Boston night out planned along the T.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

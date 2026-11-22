@@ -62,6 +62,6 @@ Given the group's budget per person, group size, time available, starting statio
 5. Never include 21+ places unless over21 is true. Only use placeIds returned by searchPlaces.
 6. For late nights, call getLastTrain on the final stop's station and make sure the plan wraps up before it.
 Write a fun, short quest title and a one-line tagline. Keep "why" lines specific (what to order or do).`,
-  model: process.env.GEMINI_MODEL ?? "google/gemini-2.5-flash",
+  model: process.env.GEMINI_MODEL ?? "google/gemini-3.8-flash",
   tools: { searchPlacesTool, lastTrainTool },
 });
