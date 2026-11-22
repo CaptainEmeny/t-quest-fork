@@ -1,26 +1,26 @@
-const path = require("path");
-require("dotenv").config({ path: path.resolve(__dirname, "../.env.local") });
+require("dotenv").config();
 
 const express = require("express");
-const pool = require("./quest-db/db");
+const authroutes = require("./Authentication/authroutes");
 
 const app = express();
 
 app.use(express.json());
 
-app.get("/", async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT NOW()"
-    );
+app.use("/auth", authroutes);
 
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Database connection failed");
-  }
+app.get("/", (req, res) => {
+  res.json({
+    message: "Quest Generator API Running"
+  });
 });
 
-app.listen(3000, () => {
-  console.log("Server running");
-});
+const PORT = process.env.PORT || 3000;
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
